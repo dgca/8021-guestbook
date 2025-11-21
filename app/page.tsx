@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Wallet } from "@coinbase/onchainkit/wallet";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { Attribution } from "ox/erc8021";
 import styles from "./page.module.css";
 
 const GUESTBOOK_ADDRESS = "0x9805D57A15c014c6C18fE2D237cbB1784795CB1E";
@@ -73,6 +74,9 @@ export default function Home() {
       abi: GUESTBOOK_ABI,
       functionName: "sign",
       args: [message],
+      dataSuffix: Attribution.toDataSuffix({
+        codes: ["typeof.eth"],
+      }),
     });
   };
 

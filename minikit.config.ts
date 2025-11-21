@@ -22,7 +22,7 @@ export const minikitConfig = {
   miniapp: {
     version: "1",
     name: "ERC-8021 Guestbook",
-    subtitle: "Sign the guestbook, change the world",
+    subtitle: "Sign it! Sign it!",
     description: "Demo app to test the ERC-8021 attribution standard",
     screenshotUrls: [],
     iconUrl: `${ROOT_URL}/icon.png`,
