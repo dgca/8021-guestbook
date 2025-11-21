@@ -2,8 +2,13 @@
 import { useEffect, useState } from "react";
 import { Wallet } from "@coinbase/onchainkit/wallet";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useSendCalls,
+} from "wagmi";
 import { Attribution } from "ox/erc8021";
+import { encodeFunctionData } from "viem";
 import styles from "./page.module.css";
 
 const GUESTBOOK_ADDRESS = "0x9805D57A15c014c6C18fE2D237cbB1784795CB1E";
@@ -45,6 +50,10 @@ const GUESTBOOK_ABI = [
   },
 ] as const;
 
+const DATA_SUFFIX = Attribution.toDataSuffix({
+  codes: ["8021-guestbook"],
+});
+
 export default function Home() {
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
   const [message, setMessage] = useState("");
@@ -52,6 +61,12 @@ export default function Home() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
+  const {
+    sendCalls,
+    data: callsId,
+    error: callsError,
+    isPending: isCallsPending,
+  } = useSendCalls();
 
   useEffect(() => {
     if (!isMiniAppReady) {
@@ -74,9 +89,27 @@ export default function Home() {
       abi: GUESTBOOK_ABI,
       functionName: "sign",
       args: [message],
-      dataSuffix: Attribution.toDataSuffix({
-        codes: ["8021-guestbook"],
-      }),
+      dataSuffix: DATA_SUFFIX,
+    });
+  };
+
+  const handleSendCalls = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    const data = encodeFunctionData({
+      abi: GUESTBOOK_ABI,
+      functionName: "sign",
+      args: [message],
+    });
+
+    sendCalls({
+      calls: [
+        {
+          to: GUESTBOOK_ADDRESS,
+          data: (data + DATA_SUFFIX.slice(2)) as `0x${string}`,
+        },
+      ],
     });
   };
 
@@ -96,15 +129,30 @@ export default function Home() {
             placeholder="Leave your message..."
             className={styles.textarea}
             rows={4}
-            disabled={isPending || isConfirming}
+            disabled={isPending || isConfirming || isCallsPending}
           />
 
           <button
             type="submit"
-            disabled={!message.trim() || isPending || isConfirming}
+            disabled={
+              !message.trim() || isPending || isConfirming || isCallsPending
+            }
             className={styles.button}
           >
-            {isPending || isConfirming ? "Signing..." : "Sign Guestbook"}
+            {isPending || isConfirming
+              ? "Signing..."
+              : "Submit (writeContract)"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSendCalls}
+            disabled={
+              !message.trim() || isPending || isConfirming || isCallsPending
+            }
+            className={styles.buttonSecondary}
+          >
+            {isCallsPending ? "Signing..." : "Submit (sendCalls)"}
           </button>
         </form>
 
@@ -129,9 +177,22 @@ export default function Home() {
           </div>
         )}
 
+        {callsId && (
+          <div className={styles.success}>
+            <p>Batch call submitted!</p>
+            <p className={styles.callsId}>Call ID: {callsId.id}</p>
+          </div>
+        )}
+
         {error && (
           <div className={styles.error}>
             <p>Error: {error.message}</p>
+          </div>
+        )}
+
+        {callsError && (
+          <div className={styles.error}>
+            <p>Error: {callsError.message}</p>
           </div>
         )}
       </div>
