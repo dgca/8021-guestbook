@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
     other: {
       "fc:miniapp": JSON.stringify({
         version: minikitConfig.miniapp.version,
-        imageUrl: minikitConfig.miniapp.heroImageUrl,
+        imageUrl: minikitConfig.miniapp.embedImageUrl,
         button: {
           title: `Launch ${minikitConfig.miniapp.name}`,
           action: {

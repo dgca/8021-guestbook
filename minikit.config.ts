@@ -33,6 +33,7 @@ export const minikitConfig = {
     primaryCategory: "utility",
     tags: ["ERC-8021", "demo"],
     heroImageUrl: `${ROOT_URL}/hero.png`,
+    embedImageUrl: `${ROOT_URL}/embed.png`,
     tagline: "",
     ogTitle: "",
     ogDescription: "",

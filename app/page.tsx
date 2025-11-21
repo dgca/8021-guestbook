@@ -75,7 +75,7 @@ export default function Home() {
       functionName: "sign",
       args: [message],
       dataSuffix: Attribution.toDataSuffix({
-        codes: ["typeof.eth"],
+        codes: ["8021-guestbook"],
       }),
     });
   };
