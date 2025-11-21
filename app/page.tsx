@@ -1,28 +1,81 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Wallet } from "@coinbase/onchainkit/wallet";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-// import { useQuickAuth } from "@coinbase/onchainkit/minikit";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import styles from "./page.module.css";
 
-export default function Home() {
-  // If you need to verify the user's identity, you can use the useQuickAuth hook.
-  // This hook will verify the user's signature and return the user's FID. You can update
-  // this to meet your needs. See the /app/api/auth/route.ts file for more details.
-  // Note: If you don't need to verify the user's identity, you can get their FID and other user data
-  // via `useMiniKit().context?.user`.
-  // const { data, isLoading, error } = useQuickAuth<{
-  //   userFid: string;
-  // }>("/api/auth");
+const GUESTBOOK_ADDRESS = "0x9805D57A15c014c6C18fE2D237cbB1784795CB1E";
 
+const GUESTBOOK_ABI = [
+  {
+    inputs: [],
+    name: "getEntries",
+    outputs: [
+      {
+        components: [
+          { internalType: "address", name: "from", type: "address" },
+          { internalType: "string", name: "message", type: "string" },
+        ],
+        internalType: "struct GuestBook.Entry[]",
+        name: "",
+        type: "tuple[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "string", name: "_message", type: "string" }],
+    name: "sign",
+    outputs: [
+      {
+        components: [
+          { internalType: "address", name: "from", type: "address" },
+          { internalType: "string", name: "message", type: "string" },
+        ],
+        internalType: "struct GuestBook.Entry",
+        name: "",
+        type: "tuple",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
+
+export default function Home() {
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
+  const [message, setMessage] = useState("");
+  const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   useEffect(() => {
     if (!isMiniAppReady) {
       setMiniAppReady();
     }
   }, [setMiniAppReady, isMiniAppReady]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      setMessage("");
+    }
+  }, [isSuccess]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    writeContract({
+      address: GUESTBOOK_ADDRESS,
+      abi: GUESTBOOK_ABI,
+      functionName: "sign",
+      args: [message],
+    });
+  };
 
   return (
     <div className={styles.container}>
@@ -31,51 +84,53 @@ export default function Home() {
       </header>
 
       <div className={styles.content}>
-        <Image
-          priority
-          src="/sphere.svg"
-          alt="Sphere"
-          width={200}
-          height={200}
-        />
-        <h1 className={styles.title}>MiniKit</h1>
+        <h1>ERC-8021 Guestbook</h1>
 
-        <p>
-          Get started by editing <code>app/page.tsx</code>
-        </p>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Leave your message..."
+            className={styles.textarea}
+            rows={4}
+            disabled={isPending || isConfirming}
+          />
 
-        <h2 className={styles.componentsTitle}>Explore Components</h2>
+          <button
+            type="submit"
+            disabled={!message.trim() || isPending || isConfirming}
+            className={styles.button}
+          >
+            {isPending || isConfirming ? "Signing..." : "Sign Guestbook"}
+          </button>
+        </form>
 
-        <ul className={styles.components}>
-          {[
-            {
-              name: "Transaction",
-              url: "https://docs.base.org/onchainkit/transaction/transaction",
-            },
-            {
-              name: "Swap",
-              url: "https://docs.base.org/onchainkit/swap/swap",
-            },
-            {
-              name: "Checkout",
-              url: "https://docs.base.org/onchainkit/checkout/checkout",
-            },
-            {
-              name: "Wallet",
-              url: "https://docs.base.org/onchainkit/wallet/wallet",
-            },
-            {
-              name: "Identity",
-              url: "https://docs.base.org/onchainkit/identity/identity",
-            },
-          ].map((component) => (
-            <li key={component.name}>
-              <a target="_blank" rel="noreferrer" href={component.url}>
-                {component.name}
-              </a>
-            </li>
-          ))}
-        </ul>
+        {hash && (
+          <div className={styles.feedback}>
+            {isConfirming && (
+              <p className={styles.pending}>Waiting for confirmation...</p>
+            )}
+            {isSuccess && (
+              <div className={styles.success}>
+                <p>Successfully signed the guestbook!</p>
+                <a
+                  href={`https://basescan.org/tx/${hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.link}
+                >
+                  View transaction
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {error && (
+          <div className={styles.error}>
+            <p>Error: {error.message}</p>
+          </div>
+        )}
       </div>
     </div>
   );
