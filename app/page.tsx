@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Wallet } from "@coinbase/onchainkit/wallet";
+import {
+  ConnectWallet,
+  Wallet,
+  WalletDropdown,
+  WalletDropdownDisconnect,
+} from "@coinbase/onchainkit/wallet";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import {
   useWriteContract,
@@ -10,6 +15,13 @@ import {
 import { Attribution } from "ox/erc8021";
 import { encodeFunctionData } from "viem";
 import styles from "./page.module.css";
+import {
+  Address,
+  Avatar,
+  EthBalance,
+  Identity,
+  Name,
+} from "@coinbase/onchainkit/identity";
 
 const GUESTBOOK_ADDRESS = "0x9805D57A15c014c6C18fE2D237cbB1784795CB1E";
 
@@ -116,7 +128,20 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <header className={styles.headerWrapper}>
-        <Wallet />
+        <Wallet>
+          <ConnectWallet />
+          <WalletDropdown>
+            <Identity>
+              <Avatar />
+              <Name />
+              <Address />
+              <EthBalance />
+            </Identity>
+            <Address />
+            <EthBalance />
+            <WalletDropdownDisconnect />
+          </WalletDropdown>
+        </Wallet>
       </header>
 
       <div className={styles.content}>
