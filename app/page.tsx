@@ -109,19 +109,20 @@ export default function Home() {
     e.preventDefault();
     if (!message.trim()) return;
 
-    const data = encodeFunctionData({
-      abi: GUESTBOOK_ABI,
-      functionName: "sign",
-      args: [message],
-    });
-
     sendCalls({
       calls: [
         {
           to: GUESTBOOK_ADDRESS,
-          data: (data + DATA_SUFFIX.slice(2)) as `0x${string}`,
+          data: encodeFunctionData({
+            abi: GUESTBOOK_ABI,
+            functionName: "sign",
+            args: [message],
+          }),
         },
       ],
+      capabilities: {
+        dataSuffix: DATA_SUFFIX,
+      },
     });
   };
 
