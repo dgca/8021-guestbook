@@ -7,7 +7,11 @@ import {
   WalletDropdownDisconnect,
 } from "@coinbase/onchainkit/wallet";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useSendCalls } from "wagmi";
+import {
+  useSendCalls,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
 import { Attribution } from "ox/erc8021";
 import { encodeFunctionData } from "viem";
 import styles from "./page.module.css";
@@ -65,11 +69,26 @@ const DATA_SUFFIX = Attribution.toDataSuffix({
 export default function Home() {
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
   const [message, setMessage] = useState("");
+  const [lastAction, setLastAction] = useState<string>("");
+
+  // writeContract hooks
+  const {
+    writeContract,
+    data: hash,
+    error: writeError,
+    isPending: isWritePending,
+  } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isWriteSuccess } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
+
+  // sendCalls hooks
   const {
     sendCalls,
     data: callsId,
-    error,
-    isPending,
+    error: callsError,
+    isPending: isCallsPending,
   } = useSendCalls();
 
   useEffect(() => {
@@ -79,16 +98,36 @@ export default function Home() {
   }, [setMiniAppReady, isMiniAppReady]);
 
   useEffect(() => {
-    if (callsId) {
+    if (isWriteSuccess || callsId) {
       setMessage("");
     }
-  }, [callsId]);
+  }, [isWriteSuccess, callsId]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const isPending = isWritePending || isConfirming || isCallsPending;
+
+  const handleWriteContract = (withAttribution: boolean) => {
     if (!message.trim()) return;
+    setLastAction(withAttribution ? "writeContract-with" : "writeContract-without");
 
-    sendCalls({
+    const params: any = {
+      address: GUESTBOOK_ADDRESS,
+      abi: GUESTBOOK_ABI,
+      functionName: "sign",
+      args: [message],
+    };
+
+    if (withAttribution) {
+      params.dataSuffix = DATA_SUFFIX;
+    }
+
+    writeContract(params);
+  };
+
+  const handleSendCalls = (withAttribution: boolean) => {
+    if (!message.trim()) return;
+    setLastAction(withAttribution ? "sendCalls-with" : "sendCalls-without");
+
+    const params: any = {
       calls: [
         {
           to: GUESTBOOK_ADDRESS,
@@ -99,10 +138,15 @@ export default function Home() {
           }),
         },
       ],
-      capabilities: {
+    };
+
+    if (withAttribution) {
+      params.capabilities = {
         dataSuffix: DATA_SUFFIX,
-      },
-    });
+      };
+    }
+
+    sendCalls(params);
   };
 
   return (
@@ -127,7 +171,7 @@ export default function Home() {
       <div className={styles.content}>
         <h1>ERC-8021 Guestbook</h1>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.form}>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -137,25 +181,71 @@ export default function Home() {
             disabled={isPending}
           />
 
-          <button
-            type="submit"
-            disabled={!message.trim() || isPending}
-            className={styles.button}
-          >
-            {isPending ? "Signing..." : "Sign Guestbook"}
-          </button>
-        </form>
+          <div className={styles.buttonGroup}>
+            <div className={styles.column}>
+              <h3 className={styles.columnTitle}>With Attribution</h3>
+              <button
+                onClick={() => handleWriteContract(true)}
+                disabled={!message.trim() || isPending}
+                className={styles.button}
+              >
+                writeContract
+              </button>
+              <button
+                onClick={() => handleSendCalls(true)}
+                disabled={!message.trim() || isPending}
+                className={styles.button}
+              >
+                sendCalls
+              </button>
+            </div>
+
+            <div className={styles.column}>
+              <h3 className={styles.columnTitle}>Without Attribution</h3>
+              <button
+                onClick={() => handleWriteContract(false)}
+                disabled={!message.trim() || isPending}
+                className={styles.buttonSecondary}
+              >
+                writeContract
+              </button>
+              <button
+                onClick={() => handleSendCalls(false)}
+                disabled={!message.trim() || isPending}
+                className={styles.buttonSecondary}
+              >
+                sendCalls
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {hash && isWriteSuccess && (
+          <div className={styles.success}>
+            <p>Transaction successful!</p>
+            <p className={styles.detail}>Method: {lastAction}</p>
+            <a
+              href={`https://basescan.org/tx/${hash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.link}
+            >
+              View on BaseScan
+            </a>
+          </div>
+        )}
 
         {callsId && (
           <div className={styles.success}>
-            <p>Successfully signed the guestbook!</p>
+            <p>Batch call submitted!</p>
+            <p className={styles.detail}>Method: {lastAction}</p>
             <p className={styles.callsId}>Call ID: {callsId.id}</p>
           </div>
         )}
 
-        {error && (
+        {(writeError || callsError) && (
           <div className={styles.error}>
-            <p>Error: {error.message}</p>
+            <p>Error: {(writeError || callsError)?.message}</p>
           </div>
         )}
       </div>
