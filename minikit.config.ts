@@ -17,7 +17,7 @@ export const minikitConfig = {
       "xp5dmAKxM2LATUBXGr9JI4w2ac8K3894MHXp033rq/NQst1qiI8frIA/KiIg+/q4YTNl14wudE4uxuVXXHg1Mxw=",
   },
   baseBuilder: {
-    ownerAddress: "0xfa6b3df826636eb76e23c1ee38180db3b8f60a86",
+    ownerAddress: "0x30526DC5cd1Ea3a687A1284D07A789d94a4B13d5",
   },
   miniapp: {
     version: "1",
