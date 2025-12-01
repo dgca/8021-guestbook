@@ -107,46 +107,62 @@ export default function Home() {
 
   const handleWriteContract = (withAttribution: boolean) => {
     if (!message.trim()) return;
-    setLastAction(withAttribution ? "writeContract-with" : "writeContract-without");
-
-    const params: any = {
-      address: GUESTBOOK_ADDRESS,
-      abi: GUESTBOOK_ABI,
-      functionName: "sign",
-      args: [message],
-    };
+    setLastAction(
+      withAttribution ? "writeContract-with" : "writeContract-without"
+    );
 
     if (withAttribution) {
-      params.dataSuffix = DATA_SUFFIX;
+      writeContract({
+        address: GUESTBOOK_ADDRESS,
+        abi: GUESTBOOK_ABI,
+        functionName: "sign",
+        args: [message],
+        dataSuffix: DATA_SUFFIX,
+      });
+    } else {
+      writeContract({
+        address: GUESTBOOK_ADDRESS,
+        abi: GUESTBOOK_ABI,
+        functionName: "sign",
+        args: [message],
+      });
     }
-
-    writeContract(params);
   };
 
   const handleSendCalls = (withAttribution: boolean) => {
     if (!message.trim()) return;
     setLastAction(withAttribution ? "sendCalls-with" : "sendCalls-without");
 
-    const params: any = {
-      calls: [
-        {
-          to: GUESTBOOK_ADDRESS,
-          data: encodeFunctionData({
-            abi: GUESTBOOK_ABI,
-            functionName: "sign",
-            args: [message],
-          }),
-        },
-      ],
-    };
-
     if (withAttribution) {
-      params.capabilities = {
-        dataSuffix: DATA_SUFFIX,
-      };
+      sendCalls({
+        calls: [
+          {
+            to: GUESTBOOK_ADDRESS,
+            data: encodeFunctionData({
+              abi: GUESTBOOK_ABI,
+              functionName: "sign",
+              args: [message],
+            }),
+          },
+        ],
+        capabilities: {
+          dataSuffix: DATA_SUFFIX,
+        },
+      });
+    } else {
+      sendCalls({
+        calls: [
+          {
+            to: GUESTBOOK_ADDRESS,
+            data: encodeFunctionData({
+              abi: GUESTBOOK_ABI,
+              functionName: "sign",
+              args: [message],
+            }),
+          },
+        ],
+      });
     }
-
-    sendCalls(params);
   };
 
   return (
