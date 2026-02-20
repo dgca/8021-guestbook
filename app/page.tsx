@@ -1,12 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useState, useEffect } from "react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   useSendCalls,
   useWriteContract,
@@ -15,13 +9,6 @@ import {
 import { Attribution } from "ox/erc8021";
 import { encodeFunctionData } from "viem";
 import styles from "./page.module.css";
-import {
-  Address,
-  Avatar,
-  EthBalance,
-  Identity,
-  Name,
-} from "@coinbase/onchainkit/identity";
 
 const GUESTBOOK_ADDRESS = "0x9805D57A15c014c6C18fE2D237cbB1784795CB1E";
 
@@ -66,8 +53,12 @@ const DATA_SUFFIX = Attribution.toDataSuffix({
   codes: ["8021-guestbook"],
 });
 
+const DATA_SUFFIX_ALT = Attribution.toDataSuffix({
+  codes: ["base"],
+});
+
 export default function Home() {
-  const { setMiniAppReady, isMiniAppReady } = useMiniKit();
+  console.log({ DATA_SUFFIX_ALT });
   const [message, setMessage] = useState("");
   const [lastAction, setLastAction] = useState<string>("");
 
@@ -90,12 +81,6 @@ export default function Home() {
     error: callsError,
     isPending: isCallsPending,
   } = useSendCalls();
-
-  useEffect(() => {
-    if (!isMiniAppReady) {
-      setMiniAppReady();
-    }
-  }, [setMiniAppReady, isMiniAppReady]);
 
   useEffect(() => {
     if (isWriteSuccess || callsId) {
@@ -168,20 +153,7 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <header className={styles.headerWrapper}>
-        <Wallet>
-          <ConnectWallet />
-          <WalletDropdown>
-            <Identity>
-              <Avatar />
-              <Name />
-              <Address />
-              <EthBalance />
-            </Identity>
-            <Address />
-            <EthBalance />
-            <WalletDropdownDisconnect />
-          </WalletDropdown>
-        </Wallet>
+        <ConnectButton />
       </header>
 
       <div className={styles.content}>

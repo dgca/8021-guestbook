@@ -1,29 +1,12 @@
 import type { Metadata } from "next";
 import { Inter, Source_Code_Pro } from "next/font/google";
-import { SafeArea } from "@coinbase/onchainkit/minikit";
-import { minikitConfig } from "@/minikit.config";
 import { RootProvider } from "./rootProvider";
 import "./globals.css";
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: minikitConfig.miniapp.name,
-    description: minikitConfig.miniapp.description,
-    other: {
-      "fc:miniapp": JSON.stringify({
-        version: minikitConfig.miniapp.version,
-        imageUrl: minikitConfig.miniapp.embedImageUrl,
-        button: {
-          title: `Launch ${minikitConfig.miniapp.name}`,
-          action: {
-            name: `Launch ${minikitConfig.miniapp.name}`,
-            type: "launch_miniapp",
-          },
-        },
-      }),
-    },
-  };
-}
+export const metadata: Metadata = {
+  title: "ERC-8021 Guestbook",
+  description: "Sign the guestbook on Base",
+};
 
 const inter = Inter({
   variable: "--font-inter",
@@ -44,7 +27,7 @@ export default function RootLayout({
     <RootProvider>
       <html lang="en">
         <body className={`${inter.variable} ${sourceCodePro.variable}`}>
-          <SafeArea>{children}</SafeArea>
+          {children}
         </body>
       </html>
     </RootProvider>

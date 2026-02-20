@@ -1,30 +1,52 @@
 "use client";
 import { ReactNode } from "react";
+import { WagmiProvider, createConfig, http } from "wagmi";
 import { base } from "wagmi/chains";
-import { OnchainKitProvider } from "@coinbase/onchainkit";
-import "@coinbase/onchainkit/styles.css";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  RainbowKitProvider,
+  connectorsForWallets,
+} from "@rainbow-me/rainbowkit";
+import {
+  coinbaseWallet,
+  metaMaskWallet,
+  rainbowWallet,
+  walletConnectWallet,
+} from "@rainbow-me/rainbowkit/wallets";
+import "@rainbow-me/rainbowkit/styles.css";
+
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
+
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: "Recommended",
+      wallets: [coinbaseWallet, metaMaskWallet, rainbowWallet, walletConnectWallet],
+    },
+  ],
+  {
+    appName: "ERC-8021 Guestbook",
+    projectId,
+  }
+);
+
+const config = createConfig({
+  connectors,
+  chains: [base],
+  transports: {
+    [base.id]: http(),
+  },
+  ssr: true,
+});
+
+const queryClient = new QueryClient();
 
 export function RootProvider({ children }: { children: ReactNode }) {
   return (
-    <OnchainKitProvider
-      apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-      chain={base}
-      config={{
-        appearance: {
-          mode: "light",
-        },
-        wallet: {
-          display: "modal",
-          preference: "all",
-        },
-      }}
-      miniKit={{
-        enabled: true,
-        autoConnect: true,
-        notificationProxyUrl: undefined,
-      }}
-    >
-      {children}
-    </OnchainKitProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>{children}</RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
