@@ -23,7 +23,7 @@ const connectors = connectorsForWallets(
   ],
   {
     appName: "ERC-8021 Guestbook",
-    projectId: "",
+    projectId: "placeholder",
   }
 );
 
