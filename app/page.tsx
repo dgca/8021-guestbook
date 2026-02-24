@@ -137,6 +137,47 @@ export default function Home() {
             value: DATA_SUFFIX,
             optional: true,
           },
+        },
+      });
+    } else {
+      sendCalls({
+        calls: [
+          {
+            to: GUESTBOOK_ADDRESS,
+            data: encodeFunctionData({
+              abi: GUESTBOOK_ABI,
+              functionName: "sign",
+              args: [message],
+            }),
+          },
+        ],
+      });
+    }
+  };
+
+  const handleSendCallsSponsored = (withAttribution: boolean) => {
+    if (!message.trim()) return;
+    setLastAction(
+      withAttribution ? "sendCalls-sponsored-with" : "sendCalls-sponsored-without"
+    );
+
+    if (withAttribution) {
+      sendCalls({
+        calls: [
+          {
+            to: GUESTBOOK_ADDRESS,
+            data: encodeFunctionData({
+              abi: GUESTBOOK_ABI,
+              functionName: "sign",
+              args: [message],
+            }),
+          },
+        ],
+        capabilities: {
+          dataSuffix: {
+            value: DATA_SUFFIX,
+            optional: true,
+          },
           paymasterService: {
             url: "https://api.developer.coinbase.com/rpc/v1/base/2aquKnMhDWlGPh9qEASgtYAfm2QQFUqd",
           },
@@ -199,6 +240,13 @@ export default function Home() {
               >
                 sendCalls
               </button>
+              <button
+                onClick={() => handleSendCallsSponsored(true)}
+                disabled={!message.trim() || isPending}
+                className={styles.button}
+              >
+                sendCalls (sponsored)
+              </button>
             </div>
 
             <div className={styles.column}>
@@ -216,6 +264,13 @@ export default function Home() {
                 className={styles.buttonSecondary}
               >
                 sendCalls
+              </button>
+              <button
+                onClick={() => handleSendCallsSponsored(false)}
+                disabled={!message.trim() || isPending}
+                className={styles.buttonSecondary}
+              >
+                sendCalls (sponsored)
               </button>
             </div>
           </div>

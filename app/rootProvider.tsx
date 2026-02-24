@@ -11,27 +11,19 @@ import {
   baseAccount,
   metaMaskWallet,
   rainbowWallet,
-  walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import "@rainbow-me/rainbowkit/styles.css";
-
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
 
 const connectors = connectorsForWallets(
   [
     {
       groupName: "Recommended",
-      wallets: [
-        baseAccount,
-        metaMaskWallet,
-        rainbowWallet,
-        walletConnectWallet,
-      ],
+      wallets: [baseAccount, metaMaskWallet, rainbowWallet],
     },
   ],
   {
     appName: "ERC-8021 Guestbook",
-    projectId,
+    projectId: "",
   }
 );
 
@@ -41,7 +33,6 @@ const config = createConfig({
   transports: {
     [base.id]: http(),
   },
-  ssr: true,
 });
 
 const queryClient = new QueryClient();
