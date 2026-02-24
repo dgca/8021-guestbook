@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { sdk } from "@farcaster/miniapp-sdk";
 import {
   useSendCalls,
   useWriteContract,
@@ -53,16 +54,11 @@ const DATA_SUFFIX = Attribution.toDataSuffix({
   codes: ["8021-guestbook"],
 });
 
-const DATA_SUFFIX_ALT = Attribution.toDataSuffix({
-  codes: ["base"],
-});
-
 export default function Home() {
-  console.log({ DATA_SUFFIX_ALT });
   const [message, setMessage] = useState("");
   const [lastAction, setLastAction] = useState<string>("");
+  const sdkReadyCalled = useRef(false);
 
-  // writeContract hooks
   const {
     writeContract,
     data: hash,
@@ -74,13 +70,19 @@ export default function Home() {
       hash,
     });
 
-  // sendCalls hooks
   const {
     sendCalls,
     data: callsId,
     error: callsError,
     isPending: isCallsPending,
   } = useSendCalls();
+
+  useEffect(() => {
+    if (!sdkReadyCalled.current) {
+      sdkReadyCalled.current = true;
+      sdk.actions.ready();
+    }
+  }, []);
 
   useEffect(() => {
     if (isWriteSuccess || callsId) {
