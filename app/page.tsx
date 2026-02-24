@@ -1,12 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useState, useEffect, useRef } from "react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { sdk } from "@farcaster/miniapp-sdk";
 import {
   useSendCalls,
   useWriteContract,
@@ -15,13 +10,6 @@ import {
 import { Attribution } from "ox/erc8021";
 import { encodeFunctionData } from "viem";
 import styles from "./page.module.css";
-import {
-  Address,
-  Avatar,
-  EthBalance,
-  Identity,
-  Name,
-} from "@coinbase/onchainkit/identity";
 
 const GUESTBOOK_ADDRESS = "0x9805D57A15c014c6C18fE2D237cbB1784795CB1E";
 
@@ -67,11 +55,10 @@ const DATA_SUFFIX = Attribution.toDataSuffix({
 });
 
 export default function Home() {
-  const { setMiniAppReady, isMiniAppReady } = useMiniKit();
   const [message, setMessage] = useState("");
   const [lastAction, setLastAction] = useState<string>("");
+  const sdkReadyCalled = useRef(false);
 
-  // writeContract hooks
   const {
     writeContract,
     data: hash,
@@ -83,7 +70,6 @@ export default function Home() {
       hash,
     });
 
-  // sendCalls hooks
   const {
     sendCalls,
     data: callsId,
@@ -92,10 +78,11 @@ export default function Home() {
   } = useSendCalls();
 
   useEffect(() => {
-    if (!isMiniAppReady) {
-      setMiniAppReady();
+    if (!sdkReadyCalled.current) {
+      sdkReadyCalled.current = true;
+      sdk.actions.ready();
     }
-  }, [setMiniAppReady, isMiniAppReady]);
+  }, []);
 
   useEffect(() => {
     if (isWriteSuccess || callsId) {
@@ -146,7 +133,10 @@ export default function Home() {
           },
         ],
         capabilities: {
-          dataSuffix: DATA_SUFFIX,
+          dataSuffix: {
+            value: DATA_SUFFIX,
+            optional: true,
+          },
         },
       });
     } else {
@@ -165,23 +155,59 @@ export default function Home() {
     }
   };
 
+  const handleSendCallsSponsored = (withAttribution: boolean) => {
+    if (!message.trim()) return;
+    setLastAction(
+      withAttribution ? "sendCalls-sponsored-with" : "sendCalls-sponsored-without"
+    );
+
+    if (withAttribution) {
+      sendCalls({
+        calls: [
+          {
+            to: GUESTBOOK_ADDRESS,
+            data: encodeFunctionData({
+              abi: GUESTBOOK_ABI,
+              functionName: "sign",
+              args: [message],
+            }),
+          },
+        ],
+        capabilities: {
+          dataSuffix: {
+            value: DATA_SUFFIX,
+            optional: true,
+          },
+          paymasterService: {
+            url: "https://api.developer.coinbase.com/rpc/v1/base/2aquKnMhDWlGPh9qEASgtYAfm2QQFUqd",
+          },
+        },
+      });
+    } else {
+      sendCalls({
+        calls: [
+          {
+            to: GUESTBOOK_ADDRESS,
+            data: encodeFunctionData({
+              abi: GUESTBOOK_ABI,
+              functionName: "sign",
+              args: [message],
+            }),
+          },
+        ],
+        capabilities: {
+          paymasterService: {
+            url: "https://api.developer.coinbase.com/rpc/v1/base/2aquKnMhDWlGPh9qEASgtYAfm2QQFUqd",
+          },
+        },
+      });
+    }
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.headerWrapper}>
-        <Wallet>
-          <ConnectWallet />
-          <WalletDropdown>
-            <Identity>
-              <Avatar />
-              <Name />
-              <Address />
-              <EthBalance />
-            </Identity>
-            <Address />
-            <EthBalance />
-            <WalletDropdownDisconnect />
-          </WalletDropdown>
-        </Wallet>
+        <ConnectButton />
       </header>
 
       <div className={styles.content}>
@@ -214,6 +240,13 @@ export default function Home() {
               >
                 sendCalls
               </button>
+              <button
+                onClick={() => handleSendCallsSponsored(true)}
+                disabled={!message.trim() || isPending}
+                className={styles.button}
+              >
+                sendCalls (sponsored)
+              </button>
             </div>
 
             <div className={styles.column}>
@@ -231,6 +264,13 @@ export default function Home() {
                 className={styles.buttonSecondary}
               >
                 sendCalls
+              </button>
+              <button
+                onClick={() => handleSendCallsSponsored(false)}
+                disabled={!message.trim() || isPending}
+                className={styles.buttonSecondary}
+              >
+                sendCalls (sponsored)
               </button>
             </div>
           </div>
