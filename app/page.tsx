@@ -133,7 +133,13 @@ export default function Home() {
           },
         ],
         capabilities: {
-          dataSuffix: DATA_SUFFIX,
+          dataSuffix: {
+            value: DATA_SUFFIX,
+            optional: true,
+          },
+          paymasterService: {
+            url: "https://api.developer.coinbase.com/rpc/v1/base/2aquKnMhDWlGPh9qEASgtYAfm2QQFUqd",
+          },
         },
       });
     } else {
@@ -148,6 +154,11 @@ export default function Home() {
             }),
           },
         ],
+        capabilities: {
+          paymasterService: {
+            url: "https://api.developer.coinbase.com/rpc/v1/base/2aquKnMhDWlGPh9qEASgtYAfm2QQFUqd",
+          },
+        },
       });
     }
   };
