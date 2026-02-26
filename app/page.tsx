@@ -12,6 +12,23 @@ import { encodeFunctionData } from "viem";
 import styles from "./page.module.css";
 
 const GUESTBOOK_ADDRESS = "0x9805D57A15c014c6C18fE2D237cbB1784795CB1E";
+const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+const ERC20_ABI = [
+  {
+    inputs: [
+      { internalType: "address", name: "spender", type: "address" },
+      { internalType: "uint256", name: "value", type: "uint256" },
+    ],
+    name: "approve",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
+
+// $1 USDC (6 decimals)
+const ONE_USDC = BigInt(1_000_000);
 
 const GUESTBOOK_ABI = [
   {
@@ -204,6 +221,27 @@ export default function Home() {
     }
   };
 
+  const handleApprove = (withAttribution: boolean) => {
+    setLastAction(withAttribution ? "approve-with" : "approve-without");
+
+    if (withAttribution) {
+      writeContract({
+        address: USDC_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "approve",
+        args: [GUESTBOOK_ADDRESS, ONE_USDC],
+        dataSuffix: DATA_SUFFIX,
+      });
+    } else {
+      writeContract({
+        address: USDC_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "approve",
+        args: [GUESTBOOK_ADDRESS, ONE_USDC],
+      });
+    }
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.headerWrapper}>
@@ -247,6 +285,13 @@ export default function Home() {
               >
                 sendCalls (sponsored)
               </button>
+              <button
+                onClick={() => handleApprove(true)}
+                disabled={isPending}
+                className={styles.button}
+              >
+                Approve (clear signing test)
+              </button>
             </div>
 
             <div className={styles.column}>
@@ -271,6 +316,13 @@ export default function Home() {
                 className={styles.buttonSecondary}
               >
                 sendCalls (sponsored)
+              </button>
+              <button
+                onClick={() => handleApprove(false)}
+                disabled={isPending}
+                className={styles.buttonSecondary}
+              >
+                Approve (clear signing test)
               </button>
             </div>
           </div>

@@ -1,7 +1,8 @@
-const ROOT_URL =
+const ROOT_URL = (
   process.env.NEXT_PUBLIC_URL ||
   (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
-  "http://localhost:3000";
+  "http://localhost:3000"
+).replace(/\/$/, "");
 
 const manifest = {
   accountAssociation: {
@@ -23,7 +24,12 @@ const manifest = {
     webhookUrl: `${ROOT_URL}/api/webhook`,
     primaryCategory: "utility",
     tags: ["ERC-8021", "demo"],
-    imageUrl: `${ROOT_URL}/hero.png`,
+    heroImageUrl: `${ROOT_URL}/hero.png`,
+    embedImageUrl: `${ROOT_URL}/embed.png`,
+    ogImageUrl: `${ROOT_URL}/hero.png`,
+  },
+  baseBuilder: {
+    ownerAddress: "0x30526DC5cd1Ea3a687A1284D07A789d94a4B13d5",
   },
 };
 
